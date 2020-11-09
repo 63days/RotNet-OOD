@@ -2,6 +2,12 @@
 
 A Simplified Pytorch implementation of *Using Self-Supervised Learning Can Improve Model Robustness and Uncertainty(NeurIPS 2019)*
 
+## Introduction
+A number of **Self-supervised learning** have been proposed, each exploring a different pretext task. 
+![image](https://user-images.githubusercontent.com/37788686/98557609-c4d4c400-22e7-11eb-99b3-7566a9dc499e.png)
+
+Predicting rotation requires modeling shape. Texture alone is not sufficient for determining whether the zebra is flipped, although 
+
 **The code supports only Multi-class OOD Detection experiment(in-dist: CIFAR-10, Out-of-dist: CIFAR-100/SVHN)** 
 
 
