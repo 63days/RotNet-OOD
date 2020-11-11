@@ -20,7 +20,7 @@ ROT(rotation method) shows better performance than MSP(Maximum Softmax Probabili
 **The code supports only Multi-class OOD Detection experiment(in-dist: CIFAR-10, Out-of-dist: CIFAR-100/SVHN)** 
 
 
-- Command 
+## Command 
   - RotNet-OOD
   
     python test.py --method=rot --ood_dataset=cifar100
@@ -29,7 +29,43 @@ ROT(rotation method) shows better performance than MSP(Maximum Softmax Probabili
   
     python test.py --method=msp --ood_dataset=svhn
 
-- Reference
+## Code Explanation
+* train.py
+```python
+    for x_tf_0, x_tf_90, x_tf_180, x_tf_270, batch_y in tqdm(train_loader):  
+        batch_size = x_tf_0.shape[0]
+
+        batch_x = torch.cat([x_tf_0, x_tf_90, x_tf_180, x_tf_270], 0).cuda()    # batch_x: [bs*4, 3, 32, 32]
+        batch_y = batch_y.cuda()                                                # batch_y: [bs]        
+        batch_rot_y = torch.cat((                                               # batch_rot_y: [bs*4]
+            torch.zeros(batch_size),
+            torch.ones(batch_size),
+            2 * torch.ones(batch_size),
+            3 * torch.ones(batch_size)
+        ), 0).long().cuda()
+
+        optimizer.zero_grad()
+
+        logits, pen = model(batch_x)
+        
+        classification_logits = logits[:batch_size]
+        rot_logits  = model.rot_head(pen)
+
+        # classification loss(only using not rotated images)
+        classification_loss = F.cross_entropy(classification_logits, batch_y)
+        # rotation loss
+        rot_loss = F.cross_entropy(rot_logits, batch_rot_y)  
+        
+        # use self-supervised rotation loss 
+        if args.method == 'rot':
+            loss = classification_loss + args.rot_loss_weight * rot_loss 
+        # baseline, maximum softmax probability
+        elif args.method == 'msp':
+            loss = classification_loss
+```
+x_tf_0, x_tf_90, x_tf_180, x_tf_270 are 0, 90, 180, 270-degree rotated images and have 0, 1, 2, 3 as label, respectively. At method=='rot', rotation loss is added to loss and method=='mlp' uses only classification loss. 
+
+## Reference
   - full code(by authors): https://github.com/hendrycks/ss-ood
   - Unsupervised Representation Learning by Predicting Image Rotations: https://arxiv.org/abs/1803.07728
   - Using Self-Supervised Learning Can Improve Model Robustness and Uncertainty(NeurIPS 2019): https://arxiv.org/abs/1906.12340
